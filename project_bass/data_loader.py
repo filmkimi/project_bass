@@ -1,5 +1,6 @@
-from pathlib import Path
+from __future__ import annotations
 
+from pathlib import Path
 import numpy as np
 import trimesh
 
@@ -46,7 +47,7 @@ def denormalize_vertices(
     ):
         raise ValueError("vertices and min/max must contain only finite values")
     if np.any(maximum < minimum):
-        raise ValueError("maximum must be greater than or equal to minimum")
+        raise ValueError("maximum must be greater than or mequal to minimum")
 
     return (vertices + 1) * (maximum - minimum) / 2 + minimum
 

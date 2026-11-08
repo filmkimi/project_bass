@@ -81,14 +81,25 @@ def reconstruct_mesh(
 
 
 def load_mesh(mesh_path: str | Path) -> tuple[np.ndarray, np.ndarray]:
-    """Load a PLY or OBJ mesh and return its vertices and faces."""
+    """Load a 3D mesh file (.ply, .obj, .stl, .off, .glb, .gltf) and return vertices and faces."""
     path = Path(mesh_path)
-    if path.suffix.lower() not in {".ply", ".obj"}:
+    allowed_suffixes = {".ply", ".obj", ".stl", ".off", ".glb", ".gltf"}
+    
+    if path.suffix.lower() not in allowed_suffixes:
         raise ValueError(f"Unsupported mesh file type: {path.suffix}")
 
-    mesh = trimesh.load(path, force="mesh")
-    if not isinstance(mesh, trimesh.Trimesh):
-        raise ValueError(f"File does not contain a 3D mesh: {path}")
+    loaded = trimesh.load(path)
+
+    # หากเป็น Scene (เช่น ไฟล์ .gltf หรือ .glb) ให้ดึงและรวม Mesh ทั้งหมดเข้าด้วยกัน
+    if isinstance(loaded, trimesh.Scene):
+        meshes = [g for g in loaded.geometry.values() if isinstance(g, trimesh.Trimesh)]
+        if not meshes:
+            raise ValueError("No valid 3D geometry found in the file Scene.")
+        mesh = trimesh.util.concatenate(meshes)
+    elif isinstance(loaded, trimesh.Trimesh):
+        mesh = loaded
+    else:
+        raise ValueError(f"File does not contain a supported 3D mesh: {path}")
 
     vertices = np.asarray(mesh.vertices)
     faces = np.asarray(mesh.faces)
